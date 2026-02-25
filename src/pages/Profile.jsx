@@ -151,7 +151,7 @@ export default function Profile() {
   const avatarSrc = userProfile?.photoURL || auth.currentUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile?.username || "user"}`;
 
   return (
-    <div className="bg-background text-foreground min-h-screen selection:bg-primary/30 relative">
+    <div className="bg-background text-foreground min-h-screen selection:bg-primary/30 relative pb-20 md:pb-0">
       
       {/* --- PROFILE HEADER --- */}
       <header className="max-w-4xl mx-auto pt-8 pb-10 px-4">
@@ -191,8 +191,8 @@ export default function Profile() {
 
             <div className="flex justify-center md:justify-start gap-8 py-4 md:py-0 border-y border-border md:border-none">
               <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userPosts.length}</b> posts</span>
-              <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userProfile?.followers || 0}</b> followers</span>
-              <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userProfile?.following || 0}</b> following</span>
+              <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userProfile?.followers?.length || 0}</b> followers</span>
+              <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userProfile?.following?.length || 0}</b> following</span>
             </div>
 
             <div className="text-sm md:text-base space-y-1">

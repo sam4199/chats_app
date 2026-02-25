@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, User, MessageCircle, PlusSquare } from "lucide-react";
+import { Home, User, MessageCircle, Search } from "lucide-react";
 
 export default function MobileNav() {
   const location = useLocation();
 
   const navItems = [
     { name: "Home", icon: <Home size={24} />, path: "/" },
-    { name: "Search", icon: <PlusSquare size={24} />, path: "/create" },
+    { name: "Search", icon: <Search size={24} />, path: "/search" },
     { name: "Messages", icon: <MessageCircle size={24} />, path: "/chat" },
     { name: "Profile", icon: <User size={24} />, path: "/profile" },
   ];
