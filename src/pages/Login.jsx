@@ -105,7 +105,7 @@ export default function Login() {
         </form>
 
         <p className="text-center text-sm text-muted-foreground pt-6">
-          New to Chats? <Link to="/signup" className="text-primary font-semibold hover:underline">Create an Account</Link>
+          New to Chats? <Link to="/signup" className="text-primary font-semibold hover:underline">Create an your account</Link>
         </p>
       </div>
     </div>
