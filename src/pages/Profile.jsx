@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
+import { auth, db, storage } from "../firebase";
 import { signOut, updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
-import { Settings, Grid, Bookmark, SquareUser, Loader2, LogOut, Heart, MessageCircle, X } from "lucide-react";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Settings, Grid, Bookmark, SquareUser, Loader2, LogOut, Heart, MessageCircle, X, Sun, Moon, Camera } from "lucide-react";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -11,10 +12,20 @@ export default function Profile() {
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // NEW STATES FOR BUTTONS
+  // Tabs & Modals State
   const [activeTab, setActiveTab] = useState("POSTS");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(
+    document.documentElement.classList.contains("dark")
+  );
+
+  // Edit Profile Form State
   const [isSaving, setIsSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [formData, setFormData] = useState({
     username: "",
     fullName: "",
@@ -31,11 +42,11 @@ export default function Profile() {
 
       const fetchProfileData = async () => {
         try {
+          // Fetch User Data
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
             setUserProfile(data);
-            // Pre-fill the edit form with existing data
             setFormData({
               username: data.username || "",
               fullName: data.fullName || user.displayName || "",
@@ -44,6 +55,7 @@ export default function Profile() {
             });
           }
 
+          // Fetch Posts Data
           const q = query(collection(db, "posts"), where("userId", "==", user.uid));
           const querySnapshot = await getDocs(q);
           const posts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -66,31 +78,62 @@ export default function Profile() {
     navigate("/");
   };
 
-  // HANDLE SAVING THE PROFILE
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    if (isDarkMode) root.classList.remove("dark");
+    else root.classList.add("dark");
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const handleImageChange = (e) => {
+    if (e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+      setImagePreview(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       const user = auth.currentUser;
-      
-      // 1. Update Firebase Auth (for displayName and photo)
+      let newPhotoURL = formData.photoURL || user.photoURL;
+
+      // 1. If user selected a new image file, upload to Firebase Storage
+      if (imageFile) {
+        const imageRef = ref(storage, `profiles/${user.uid}_${Date.now()}`);
+        await uploadBytes(imageRef, imageFile);
+        newPhotoURL = await getDownloadURL(imageRef);
+      }
+
+      // 2. Update Firebase Auth Profile
       await updateProfile(user, {
         displayName: formData.fullName || user.displayName,
-        photoURL: formData.photoURL || user.photoURL
+        photoURL: newPhotoURL
       });
 
-      // 2. Update Firestore Database (for bio and username)
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
+      const updatedData = {
         username: formData.username,
         fullName: formData.fullName,
         bio: formData.bio,
-        photoURL: formData.photoURL
-      });
+        photoURL: newPhotoURL
+      };
 
-      // 3. Update local state so UI changes instantly
-      setUserProfile((prev) => ({ ...prev, ...formData }));
+      // 3. Update Firestore Database
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        await updateDoc(userRef, updatedData);
+      } else {
+        await setDoc(userRef, { uid: user.uid, email: user.email, ...updatedData });
+      }
+
+      // 4. Update UI Instantly
+      setUserProfile((prev) => ({ ...prev, ...updatedData }));
+      setFormData((prev) => ({ ...prev, photoURL: newPhotoURL }));
       setIsEditModalOpen(false);
+      setImageFile(null);
+      setImagePreview("");
     } catch (error) {
       alert("Error updating profile: " + error.message);
     }
@@ -105,21 +148,20 @@ export default function Profile() {
     );
   }
 
+  const avatarSrc = userProfile?.photoURL || auth.currentUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile?.username || "user"}`;
+
   return (
     <div className="bg-background text-foreground min-h-screen selection:bg-primary/30 relative">
       
-      {/* Profile Header */}
+      {/* --- PROFILE HEADER --- */}
       <header className="max-w-4xl mx-auto pt-8 pb-10 px-4">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-20">
           
+          {/* Avatar */}
           <div className="flex-shrink-0 relative group">
             <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative w-28 h-28 md:w-40 md:h-40 rounded-full border-4 border-background shadow-xl overflow-hidden bg-muted flex items-center justify-center">
-              <img
-                src={userProfile?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile?.username || auth.currentUser?.displayName}`}
-                alt="profile"
-                className="w-full h-full object-cover"
-              />
+              <img src={avatarSrc} alt="profile" className="w-full h-full object-cover" />
             </div>
           </div>
 
@@ -131,7 +173,6 @@ export default function Profile() {
               </h2>
               
               <div className="flex items-center gap-2">
-                {/* EDIT PROFILE BUTTON */}
                 <button 
                   onClick={() => setIsEditModalOpen(true)}
                   className="bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold py-2 px-5 rounded-xl transition-colors cursor-pointer"
@@ -139,34 +180,32 @@ export default function Profile() {
                   Edit Profile
                 </button>
                 
-                {/* SETTINGS BUTTON */}
-                <button onClick={() => alert("Settings coming soon!")} className="p-2 hover:bg-muted rounded-xl transition-colors text-foreground cursor-pointer">
+                <button 
+                  onClick={() => setIsSettingsModalOpen(true)} 
+                  className="p-2 hover:bg-muted rounded-xl transition-colors text-foreground cursor-pointer"
+                >
                   <Settings className="w-5 h-5" />
-                </button>
-                
-                <button onClick={handleLogout} className="p-2 bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground rounded-xl transition-colors text-destructive cursor-pointer">
-                  <LogOut className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
             <div className="flex justify-center md:justify-start gap-8 py-4 md:py-0 border-y border-border md:border-none">
-              <span className="text-sm md:text-base"><b className="font-bold text-lg">{userPosts.length}</b> posts</span>
-              <span className="text-sm md:text-base"><b className="font-bold text-lg">0</b> followers</span>
-              <span className="text-sm md:text-base"><b className="font-bold text-lg">0</b> following</span>
+              <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userPosts.length}</b> posts</span>
+              <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userProfile?.followers || 0}</b> followers</span>
+              <span className="text-sm md:text-base cursor-pointer hover:opacity-80"><b className="font-bold text-lg">{userProfile?.following || 0}</b> following</span>
             </div>
 
             <div className="text-sm md:text-base space-y-1">
               <p className="font-bold text-foreground">{userProfile?.fullName || auth.currentUser?.displayName}</p>
-              <p className="text-muted-foreground font-medium leading-relaxed max-w-md mx-auto md:mx-0">
-                {userProfile?.bio || "Welcome to my ChatX profile! Exploring the new dark mode. ✨"}
+              <p className="text-muted-foreground font-medium leading-relaxed max-w-md mx-auto md:mx-0 whitespace-pre-wrap">
+                {userProfile?.bio || "Welcome to my ChatX profile! ✨"}
               </p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* WORKING TABS */}
+      {/* --- TABS --- */}
       <div className="max-w-4xl mx-auto border-t border-border">
         <div className="flex justify-center gap-12 -mt-[1px]">
           <button 
@@ -175,14 +214,12 @@ export default function Profile() {
           >
             <Grid className="w-4 h-4" /> POSTS
           </button>
-          
           <button 
             onClick={() => setActiveTab("SAVED")}
             className={`flex items-center gap-2 py-4 text-xs font-bold tracking-widest uppercase transition-colors cursor-pointer ${activeTab === "SAVED" ? "border-t-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
           >
             <Bookmark className="w-4 h-4" /> SAVED
           </button>
-          
           <button 
             onClick={() => setActiveTab("TAGGED")}
             className={`flex items-center gap-2 py-4 text-xs font-bold tracking-widest uppercase transition-colors cursor-pointer ${activeTab === "TAGGED" ? "border-t-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
@@ -192,14 +229,14 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* DYNAMIC CONTENT BASED ON ACTIVE TAB */}
+      {/* --- TAB CONTENT --- */}
       <main className="max-w-4xl mx-auto px-1 md:px-0 pb-24">
         {activeTab === "POSTS" && (
           <div className="grid grid-cols-3 gap-1 md:gap-4">
             {userPosts.length === 0 ? (
               <div className="col-span-3 py-20 text-center space-y-3">
                 <div className="w-16 h-16 border-2 border-muted-foreground rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Grid className="w-8 h-8 text-muted-foreground" />
+                  <Camera className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-xl font-bold">No Posts Yet</h3>
                 <p className="text-muted-foreground">Capture and share your best moments.</p>
@@ -218,23 +255,46 @@ export default function Profile() {
           </div>
         )}
 
-        {/* Empty States for other tabs */}
         {activeTab === "SAVED" && (
-          <div className="py-20 text-center space-y-3">
+          <div className="py-20 text-center space-y-3 animate-in fade-in">
             <Bookmark className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
             <h3 className="text-xl font-bold">Only you can see what you've saved</h3>
-            <p className="text-muted-foreground">Save photos and videos that you want to see again.</p>
+            <p className="text-muted-foreground max-w-sm mx-auto">Save photos and videos that you want to see again. No one is notified, and only you can see what you've saved.</p>
           </div>
         )}
 
         {activeTab === "TAGGED" && (
-          <div className="py-20 text-center space-y-3">
+          <div className="py-20 text-center space-y-3 animate-in fade-in">
             <SquareUser className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
             <h3 className="text-xl font-bold">Photos of you</h3>
             <p className="text-muted-foreground">When people tag you in photos, they'll appear here.</p>
           </div>
         )}
       </main>
+
+      {/* --- SETTINGS MODAL --- */}
+      {isSettingsModalOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-card border border-border w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
+              <h3 className="text-lg font-bold">Settings</h3>
+              <button onClick={() => setIsSettingsModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-2">
+              <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 hover:bg-muted rounded-xl transition-colors cursor-pointer">
+                <span className="font-semibold text-foreground">Dark Mode</span>
+                {isDarkMode ? <Moon className="w-5 h-5 text-primary" /> : <Sun className="w-5 h-5 text-primary" />}
+              </button>
+              <button onClick={handleLogout} className="w-full flex items-center justify-between p-4 hover:bg-destructive/10 text-destructive rounded-xl transition-colors cursor-pointer mt-1">
+                <span className="font-semibold">Log Out</span>
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- EDIT PROFILE MODAL --- */}
       {isEditModalOpen && (
@@ -243,12 +303,25 @@ export default function Profile() {
             
             <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
               <h3 className="text-lg font-bold">Edit Profile</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+              <button onClick={() => { setIsEditModalOpen(false); setImageFile(null); setImagePreview(""); }} className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             <form onSubmit={handleSaveProfile} className="p-5 space-y-4">
+              
+              {/* Profile Image Uploader */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-20 h-20 rounded-full border-2 border-border overflow-hidden mb-2 relative group cursor-pointer bg-muted">
+                  <img src={imagePreview || formData.photoURL || avatarSrc} alt="preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                  <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={handleImageChange} />
+                </div>
+                <span className="text-xs text-primary font-semibold">Change Photo</span>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">Full Name</label>
                 <input 
@@ -279,23 +352,12 @@ export default function Profile() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">Profile Picture URL</label>
-                <input 
-                  type="text" 
-                  value={formData.photoURL} 
-                  onChange={(e) => setFormData({...formData, photoURL: e.target.value})}
-                  placeholder="https://..."
-                  className="w-full p-3 bg-background border border-border rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm"
-                />
-              </div>
-
               <button 
                 type="submit" 
                 disabled={isSaving}
-                className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold mt-2 shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold mt-2 shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex justify-center items-center gap-2"
               >
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</> : "Save Changes"}
               </button>
             </form>
           </div>
