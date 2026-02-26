@@ -4,7 +4,8 @@ import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
-import Search from "./pages/Search"; // <-- Imported Search
+import Search from "./pages/Search"; 
+import Landing from "./pages/Landing"; // <-- 1. Import your new Landing page
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 
@@ -26,16 +27,22 @@ function App() {
       <Routes>
         {!user ? (
           <>
-            <Route path="/" element={<Login />} />
+            {/* 2. Unauthenticated users see the Landing page at "/" */}
+            <Route path="/" element={<Landing />} />
+            
+            {/* 3. Move Login and Signup to their own explicit routes */}
+            <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            
             <Route path="*" element={<Navigate to="/" />} /> 
           </>
         ) : (
           <>
+            {/* Authenticated users see Home at "/" */}
             <Route path="/" element={<Home />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/search" element={<Search />} /> {/* <-- Added Search Route */}
+            <Route path="/search" element={<Search />} /> 
             <Route path="*" element={<Navigate to="/" />} />
           </>
         )}
