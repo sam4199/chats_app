@@ -1,33 +1,34 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useContext, lazy, Suspense } from "react";
-import { AuthContext } from "./context/AuthContext.jsx";
-import { Loader2 } from "lucide-react"; // Using the loader you already have in the project
+import { useAuth } from "./context/AuthContext.jsx"; // Fixed import extension
+import { Loader2 } from "lucide-react";
 
-// 1. Dynamically import all your pages instead of standard imports
-const Login = lazy(() => import("./pages/Login"));
-const Signup = lazy(() => import("./pages/Signup"));
-const Home = lazy(() => import("./pages/Home"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Chat = lazy(() => import("./pages/Chat"));
-const Search = lazy(() => import("./pages/Search"));
-const Landing = lazy(() => import("./pages/Landing"));
+// 1. Dynamically import all your pages
+// (Added .jsx extensions here as well just to be extra safe with Vite)
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Signup = lazy(() => import("./pages/Signup.jsx"));
+const Home = lazy(() => import("./pages/Home.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const Chat = lazy(() => import("./pages/Chat.jsx"));
+const Search = lazy(() => import("./pages/Search.jsx"));
+const Landing = lazy(() => import("./pages/Landing.jsx"));
 
 function App() {
-  const context = useContext(AuthContext);
+  // Use the new custom hook to get user and loading state
+  const { user, loading } = useAuth();
 
-  if (!context) {
+  // Show a full-screen loader while Firebase checks auth state
+  if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="animate-pulse font-semibold">Loading...</div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  const { user } = context;
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* 2. Wrap Routes in Suspense to show a loader while the page chunk downloads */}
+      {/* Wrap Routes in Suspense to handle lazy-loaded chunks */}
       <Suspense 
         fallback={
           <div className="min-h-screen flex items-center justify-center">
@@ -38,7 +39,7 @@ function App() {
         <Routes>
           {!user ? (
             <>
-              {/* Unauthenticated users see the Landing page at "/" */}
+              {/* Unauthenticated Routes */}
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -46,7 +47,7 @@ function App() {
             </>
           ) : (
             <>
-              {/* Authenticated users see Home at "/" */}
+              {/* Authenticated Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/chat" element={<Chat />} />
