@@ -1,6 +1,4 @@
-// src/components/FloatingInput.jsx
 import { Eye, EyeOff } from "lucide-react";
-import { cn } from "../lib/utils"; // Assuming you have a utility file, otherwise just use standard class logic
 
 export default function FloatingInput({ icon, label, isPassword, showPassword, setShowPassword, ...props }) {
   return (

@@ -1,29 +1,32 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, User, MessageCircle, Search } from "lucide-react";
+import { Home, Search, MessageSquare, User } from "lucide-react";
 
 export default function MobileNav() {
   const location = useLocation();
 
-  const navItems = [
-    { name: "Home", icon: <Home size={24} />, path: "/" },
-    { name: "Search", icon: <Search size={24} />, path: "/search" },
-    { name: "Messages", icon: <MessageCircle size={24} />, path: "/chat" },
-    { name: "Profile", icon: <User size={24} />, path: "/profile" },
+  const menuItems = [
+    { name: "Home", icon: Home, path: "/" },
+    { name: "Search", icon: Search, path: "/search" },
+    { name: "Chats", icon: MessageSquare, path: "/chat" },
+    { name: "Profile", icon: User, path: "/profile" },
   ];
 
   return (
-    <div className="bg-background/95 backdrop-blur-lg border-t border-border flex justify-around p-2 pb-safe">
-      {navItems.map((item) => {
+    <div className="flex items-center justify-around h-full">
+      {menuItems.map((item) => {
         const isActive = location.pathname === item.path;
+        const Icon = item.icon;
         return (
           <Link
             key={item.name}
             to={item.path}
-            className={`p-3 rounded-2xl transition-all flex flex-col items-center gap-1 ${
-              isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
+            className={`
+              flex flex-col items-center justify-center w-full h-full transition-all
+              ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}
+            `}
           >
-            {item.icon}
+            <Icon size={22} className={isActive ? "stroke-2.5" : ""} />
+            <span className="text-[10px] mt-1 font-medium">{item.name}</span>
           </Link>
         );
       })}

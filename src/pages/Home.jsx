@@ -215,20 +215,17 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Layout - Fixed Structure */}
+      {/* Main Layout */}
       <div className="pt-16 min-h-screen">
         <div className="max-w-7xl mx-auto flex">
-          {/* Left Sidebar */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-6 px-4 border-r border-border/50">
               <Sidebar />
             </div>
           </aside>
 
-          {/* Main Content */}
           <main className="flex-1 min-w-0">
             <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              {/* Feed Tabs */}
               <div className="flex items-center gap-6 mb-6 border-b border-border/50">
                 {["for-you", "following"].map((tab) => (
                   <button
@@ -249,7 +246,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Stories */}
               <div className="mb-8">
                 <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
                   {stories.map((story) => (
@@ -290,9 +286,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Posts Feed */}
               <div className="space-y-6">
-                {/* Hardcoded Post matching Screenshot Description */}
                 <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-sm transition-all hover:border-border/80">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -335,7 +329,6 @@ export default function Home() {
             </div>
           </main>
 
-          {/* Right Sidebar */}
           <aside className="hidden xl:block w-80 shrink-0">
             <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-6 px-4">
               <div className="space-y-6">
@@ -345,12 +338,6 @@ export default function Home() {
                       <TrendingUp size={16} className="text-primary" />
                       Suggested for you
                     </h3>
-                    <Link 
-                      to="/explore" 
-                      className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                    >
-                      View all
-                    </Link>
                   </div>
 
                   <div className="space-y-3">
@@ -437,13 +424,11 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div className="text-xs text-muted-foreground/60 space-y-2 px-2">
                   <div className="flex flex-wrap gap-x-3 gap-y-1">
                     <Link to="/about" className="hover:underline">About</Link>
                     <Link to="/privacy" className="hover:underline">Privacy</Link>
                     <Link to="/terms" className="hover:underline">Terms</Link>
-                    <Link to="/help" className="hover:underline">Help</Link>
                   </div>
                   <p>© 2026 Chats Inc.</p>
                 </div>
@@ -453,7 +438,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
         <MobileNav />
       </div>
