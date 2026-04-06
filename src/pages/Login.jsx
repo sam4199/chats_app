@@ -1,9 +1,10 @@
+// src/pages/Login.jsx
 import { useState } from "react";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
 import { MessageCircle, Mail, Lock, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { FloatingInput } from "./Signup"; 
+import FloatingInput from "../components/FloatingInput"; 
 
 export default function Login() {
   const navigate = useNavigate();
@@ -22,12 +23,13 @@ export default function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // CRITICAL FIX: Changed from "/home" to "/" to match your App.jsx routing!
       navigate("/"); 
     } catch (err) {
+      console.error(err);
       setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleForgot = async () => {
