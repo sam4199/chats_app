@@ -1,13 +1,16 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Home from "./pages/Home";
-import Profile from "./pages/Profile";
-import Chat from "./pages/Chat";
-import Search from "./pages/Search"; 
-import Landing from "./pages/Landing"; // <-- 1. Import your new Landing page
-import { useContext } from "react";
-import { AuthContext } from "./context/AuthContext";
+import { useContext, lazy, Suspense } from "react";
+import { AuthContext } from "./context/AuthContext.jsx";
+import { Loader2 } from "lucide-react"; // Using the loader you already have in the project
+
+// 1. Dynamically import all your pages instead of standard imports
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const Home = lazy(() => import("./pages/Home"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Chat = lazy(() => import("./pages/Chat"));
+const Search = lazy(() => import("./pages/Search"));
+const Landing = lazy(() => import("./pages/Landing"));
 
 function App() {
   const context = useContext(AuthContext);
@@ -24,29 +27,35 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Routes>
-        {!user ? (
-          <>
-            {/* 2. Unauthenticated users see the Landing page at "/" */}
-            <Route path="/" element={<Landing />} />
-            
-            {/* 3. Move Login and Signup to their own explicit routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            
-            <Route path="*" element={<Navigate to="/" />} /> 
-          </>
-        ) : (
-          <>
-            {/* Authenticated users see Home at "/" */}
-            <Route path="/" element={<Home />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/search" element={<Search />} /> 
-            <Route path="*" element={<Navigate to="/" />} />
-          </>
-        )}
-      </Routes>
+      {/* 2. Wrap Routes in Suspense to show a loader while the page chunk downloads */}
+      <Suspense 
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        }
+      >
+        <Routes>
+          {!user ? (
+            <>
+              {/* Unauthenticated users see the Landing page at "/" */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="*" element={<Navigate to="/" />} /> 
+            </>
+          ) : (
+            <>
+              {/* Authenticated users see Home at "/" */}
+              <Route path="/" element={<Home />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/search" element={<Search />} /> 
+              <Route path="*" element={<Navigate to="/" />} />
+            </>
+          )}
+        </Routes>
+      </Suspense>
     </div>
   );
 }
