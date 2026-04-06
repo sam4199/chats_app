@@ -1,10 +1,10 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext.jsx"; // Fixed import extension
+import { useAuth } from "./context/AuthContext.jsx"; 
 import { Loader2 } from "lucide-react";
+import { SpeedInsights } from "@vercel/speed-insights/react"; // 1. Added correct React import
 
-// 1. Dynamically import all your pages
-// (Added .jsx extensions here as well just to be extra safe with Vite)
+// Dynamically import all your pages
 const Login = lazy(() => import("./pages/Login.jsx"));
 const Signup = lazy(() => import("./pages/Signup.jsx"));
 const Home = lazy(() => import("./pages/Home.jsx"));
@@ -14,7 +14,6 @@ const Search = lazy(() => import("./pages/Search.jsx"));
 const Landing = lazy(() => import("./pages/Landing.jsx"));
 
 function App() {
-  // Use the new custom hook to get user and loading state
   const { user, loading } = useAuth();
 
   // Show a full-screen loader while Firebase checks auth state
@@ -57,6 +56,9 @@ function App() {
           )}
         </Routes>
       </Suspense>
+      
+      {/* 2. Add the component here so it tracks performance across all routes */}
+      <SpeedInsights />
     </div>
   );
 }
