@@ -1,83 +1,89 @@
-import { Link, useLocation } from "react-router-dom";
+import { useContext } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import { 
   Home, 
   Search, 
-  MessageSquare, 
-  User, 
-  Settings, 
-  LogOut,
-  Plus
-} from "lucide-react";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
-import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+  MessageCircle, 
+  Heart, 
+  PlusSquare, 
+  User,
+  LogOut
+} from 'lucide-react';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 
 export default function Sidebar() {
-  const { user } = useContext(AuthContext);
+  const { user, profile } = useContext(AuthContext);
   const location = useLocation();
 
   const menuItems = [
-    { name: "Home", icon: Home, path: "/" },
-    { name: "Search", icon: Search, path: "/search" },
-    { name: "Messages", icon: MessageSquare, path: "/chat" },
-    { name: "Profile", icon: User, path: "/profile" },
-    { name: "Settings", icon: Settings, path: "/settings" },
+    { icon: Home, label: 'Home', path: '/home' },
+    { icon: Search, label: 'Explore', path: '/search' },
+    { icon: MessageCircle, label: 'Messages', path: '/chat' },
+    { icon: Heart, label: 'Notifications', path: '#' },
+    { icon: PlusSquare, label: 'Create', path: '/create' },
   ];
 
-  return (
-    <div className="space-y-6">
-      {/* Create Post Button */}
-      <button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-95">
-        <Plus size={20} />
-        <span>New Post</span>
-      </button>
+  const isActive = (path) => location.pathname === path;
 
-      {/* Navigation Menu */}
-      <nav className="space-y-1">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`
-                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium
-                ${isActive 
-                  ? "bg-primary/10 text-primary" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"}
-              `}
-            >
-              <Icon size={20} className={isActive ? "stroke-2.5" : ""} />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
+
+  return (
+    <div className="flex flex-col h-full py-6 px-4 space-y-6">
+      {/* Logo */}
+      <Link to="/home" className="flex items-center gap-3 px-4 mb-6">
+        <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center text-white">
+          <MessageCircle size={24} />
+        </div>
+        <span className="text-2xl font-bold hidden xl:block">Chats</span>
+      </Link>
+
+      {/* Navigation */}
+      <nav className="space-y-2 flex-1">
+        {menuItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+              isActive(item.path)
+                ? 'bg-primary/10 text-primary font-semibold'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`}
+          >
+            <item.icon size={26} className={isActive(item.path) ? 'fill-current' : ''} />
+            <span className="text-lg hidden xl:block">{item.label}</span>
+          </Link>
+        ))}
+
+        {/* Profile Link */}
+        <Link
+          to="/profile"
+          className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+            isActive('/profile')
+              ? 'bg-primary/10 text-primary font-semibold'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          }`}
+        >
+          <img
+            src={profile?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.username || 'user'}`}
+            alt="Profile"
+            className="w-7 h-7 rounded-full bg-muted object-cover"
+          />
+          <span className="text-lg hidden xl:block">Profile</span>
+        </Link>
       </nav>
 
-      {/* User Profile Snippet */}
-      {user && (
-        <div className="pt-6 border-t border-border/50">
-          <div className="flex items-center justify-between px-2 py-2">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500 text-white flex items-center justify-center text-xs font-bold">
-                {user.email ? user.email[0].toUpperCase() : "U"}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold truncate max-w-[100px]">User</span>
-                <span className="text-xs text-muted-foreground">@{user.email?.split('@')[0]}</span>
-              </div>
-            </div>
-            <button 
-              onClick={() => signOut(auth)}
-              className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
-            >
-              <LogOut size={18} />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-4 px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+      >
+        <LogOut size={26} />
+        <span className="text-lg hidden xl:block">Log out</span>
+      </button>
     </div>
   );
 }

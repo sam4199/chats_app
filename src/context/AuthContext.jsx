@@ -1,50 +1,62 @@
-// 1. ALL imports must be at the very top of the file
-import { createContext, useEffect, useState, useContext } from "react";
-import { auth, db } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { createContext, useContext, useState, useEffect } from 'react';
+import { auth, db } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
+// Export the context itself
 export const AuthContext = createContext();
 
-// 2. Create and export the useAuth hook
+// Export the hook
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
-// 3. Define the provider component
+// Export the provider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      
-      // If a user is logged in, fetch their extra profile data from Firestore
-      if (currentUser) {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUser(user);
         try {
-          const docRef = doc(db, "users", currentUser.uid);
+          const docRef = doc(db, 'users', user.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             setProfile(docSnap.data());
           }
         } catch (error) {
-          console.error("Error fetching user profile:", error);
+          console.error("Error fetching profile:", error);
         }
       } else {
+        setUser(null);
         setProfile(null);
       }
-      
       setLoading(false);
     });
-    
-    return () => unsub();
+
+    return () => unsubscribe();
   }, []);
 
+  const value = {
+    user,
+    profile,
+    loading,
+    isAuthenticated: !!user
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
   );
 };
+
+// Also export default for flexibility
+export default AuthContext;
