@@ -16,7 +16,7 @@ import {
 import { AuthContext } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
 import MobileNav from "../components/MobileNav";
-import Upload from "../components/Upload";
+import Upload from "../components/upload";
 import Feed from "../components/Feed";
 
 function cn(...inputs) {
