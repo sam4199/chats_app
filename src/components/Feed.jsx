@@ -1,45 +1,20 @@
-export default function Feed() {
-  return (
-    <div style={styles.feed}>
-      <div style={styles.card}>
-        <h4>@john_doe</h4>
-        <img
-          src="https://picsum.photos/500/300"
-          alt="post"
-          style={styles.image}
-        />
-        <p>❤️ 120 likes</p>
-      </div>
+import Post from "./Post";
 
-      <div style={styles.card}>
-        <h4>@jane_smith</h4>
-        <img
-          src="https://picsum.photos/500/301"
-          alt="post"
-          style={styles.image}
-        />
-        <p>❤️ 98 likes</p>
+export default function Feed({ posts = [] }) {
+  if (!posts || posts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-10 text-center border-2 border-dashed border-border rounded-3xl mt-6 bg-card/50">
+        <p className="text-muted-foreground font-medium">No posts to display right now.</p>
+        <p className="text-sm text-muted-foreground mt-1">Check back later or follow more people!</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="w-full pb-20">
+      {posts.map((post) => (
+        <Post key={post.id || Math.random()} data={post} />
+      ))}
     </div>
   );
 }
-
-const styles = {
-  feed: {
-    padding: "20px",
-    overflowY: "auto",
-    flex: 1,
-  },
-  card: {
-    backgroundColor: "white",
-    padding: "15px",
-    borderRadius: "10px",
-    marginBottom: "20px",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-  },
-  image: {
-    width: "100%",
-    borderRadius: "10px",
-    marginTop: "10px",
-  },
-};
