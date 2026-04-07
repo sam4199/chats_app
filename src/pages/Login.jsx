@@ -3,7 +3,8 @@ import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, AlertCircle, Loader2, Eye, EyeOff, ArrowRight, Chrome } from "lucide-react";
+// FIXED: Added MessageCircle to the import list below
+import { Mail, Lock, AlertCircle, Loader2, Eye, EyeOff, ArrowRight, Chrome, MessageCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
