@@ -45,7 +45,9 @@ export default function CreatePost() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files?.) handleFile(e.dataTransfer.files);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+  handleFile(e.dataTransfer.files);
+}
   };
 
   const handlePost = async (e) => {
