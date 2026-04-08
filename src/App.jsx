@@ -1,55 +1,64 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
-import { Suspense, lazy } from "react";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { AuthProvider } from "./context/AuthContext";
-import { Loader2 } from "lucide-react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import MobileNav from "./components/MobileNav";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Home from "./pages/Home";
+import CreatePost from "./pages/CreatePost";
+import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
+import Search from "./pages/Search";
 
-// Lazy load pages for better performance
-const Landing = lazy(() => import("./pages/Landing"));
-const Login = lazy(() => import("./pages/Login"));
-const Signup = lazy(() => import("./pages/Signup"));
-const Home = lazy(() => import("./pages/Home"));
-const Chat = lazy(() => import("./pages/Chat"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Search = lazy(() => import("./pages/Search"));
-const CreatePost = lazy(() => import("./pages/CreatePost"));
-
-// Loading fallback
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-  </div>
-);
+const ProtectedRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+};
 
 function App() {
   return (
-    <HelmetProvider>
-      <ErrorBoundary>
-        <AuthProvider>
-          <Router>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                
-                {/* Protected Routes - Add auth check if needed */}
-                <Route path="/home" element={<Home />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/create" element={<CreatePost />} />
-                
-                {/* 404 Redirect */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </Router>
-        </AuthProvider>
-      </ErrorBoundary>
-    </HelmetProvider>
+    <AuthProvider>
+      {/* ADDED: future prop to fix the warning */}
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <div className="min-h-screen bg-background text-foreground font-sans">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            
+            {/* App Layout */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <div className="flex flex-col h-screen">
+                    <Navbar />
+                    <div className="flex flex-1 overflow-hidden pt-16">
+                      <Sidebar />
+                      <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+                        <Routes>
+                          <Route path="/home" element={<Home />} />
+                          <Route path="/create" element={<CreatePost />} />
+                          <Route path="/profile" element={<Profile />} />
+                          <Route path="/chat" element={<Chat />} />
+                          <Route path="/search" element={<Search />} />
+                        </Routes>
+                      </main>
+                    </div>
+                    <MobileNav />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

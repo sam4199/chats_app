@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 export default function LazyImage({ src, alt, className }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const imgRef = useRef();
+  const imgRef = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -21,14 +21,14 @@ export default function LazyImage({ src, alt, className }) {
   }, []);
 
   return (
-    <div ref={imgRef} className={`relative ${className}`}>
-      {!isLoaded && <div className="absolute inset-0 bg-muted animate-pulse rounded-lg" />}
+    <div ref={imgRef} className={`relative bg-muted ${className}`}>
+      {!isLoaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
       {isInView && (
         <img
           src={src}
           alt={alt}
           loading="lazy"
-          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => setIsLoaded(true)}
         />
       )}

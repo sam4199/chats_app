@@ -3,19 +3,14 @@ import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
-// Export the context itself
 export const AuthContext = createContext();
 
-// Export the hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
-// Export the provider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -28,9 +23,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const docRef = doc(db, 'users', user.uid);
           const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setProfile(docSnap.data());
-          }
+          if (docSnap.exists()) setProfile(docSnap.data());
         } catch (error) {
           console.error("Error fetching profile:", error);
         }
@@ -44,19 +37,9 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const value = {
-    user,
-    profile,
-    loading,
-    isAuthenticated: !!user
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, profile, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );
 };
-
-// Also export default for flexibility
-export default AuthContext;
