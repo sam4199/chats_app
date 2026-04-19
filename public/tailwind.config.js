@@ -1,8 +1,4 @@
-// Triggering Vercel Rebuild
 /** @type {import('tailwindcss').Config} */
-export default {
-// ... rest of your code
-// /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
   content: [
